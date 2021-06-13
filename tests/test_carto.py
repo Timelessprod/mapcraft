@@ -9,8 +9,8 @@ def test_version():
 
 
 def test_city():
-    c = city.City(100)
-    assert c.population == 100
+    c = city.City(5000)
+    tools.json(c, 'city/city.json')
 
 
 def test_area():
