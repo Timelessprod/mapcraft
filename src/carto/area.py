@@ -28,7 +28,7 @@ class Category(IntEnum):
     MONASTRY = 22
     FORT = 31
     CASTLE = 32
-    CHATEAU = 33
+    WALL = 33
     STREET = 50
     BRIDGE = 51
     COMPOSITE = 90  # a union of Areas
@@ -58,14 +58,16 @@ class Area():
         self._category = category
         self._sub_areas = sub_areas
         self._id = self.get_id()
-
         Area.members.append(self)
 
     def __del__(self):
-        Area.members.remove(self)
+        try:
+            Area.members.remove(self)
+        except:
+            pass
 
     def __repr__(self):
-        return str(self._category) + ":" +  self._polygon.wkt
+        return str(self._category) + ":" +  self.polygon.wkt
 
     @property
     def identity(self):
@@ -97,24 +99,24 @@ class Area():
         """
         assert(percentage > 0)
 
-        if not self._polygon.exterior.is_ccw: # should be counter clockwise
-            coords = list(self._polygon.exterior.coords)
-            self._polygon = Polygon(coords[::-1])
+        if not self.polygon.exterior.is_ccw: # should be counter clockwise
+            coords = list(self.polygon.exterior.coords)
+            self.polygon = Polygon(coords[::-1])
         
         direction = np.deg2rad(90 - direction)  # degrees are cw while radian are ccw + 0 is North
-        pts = np.array(self._polygon.minimum_rotated_rectangle.exterior.coords)
+        pts = np.array(self.polygon.minimum_rotated_rectangle.exterior.coords)
         diameter = np.sqrt(np.sum(np.square(pts[2] - pts[0])))
-        start = np.array(self._polygon.centroid)
+        start = np.array(self.polygon.centroid)
         end = start +  np.array([diameter * np.cos(direction), diameter * np.sin(direction)])
         path = LineString([start, end])
-        pt_intersection = path.intersection(self._polygon.boundary)
+        pt_intersection = path.intersection(self.polygon.boundary)
 
         try:
             pt_intersection = list(pt_intersection)[-1]  # we may have more than one intersection
         except:
             pass
 
-        pts = self._polygon.boundary.coords
+        pts = self.polygon.boundary.coords
 
         for pt1, pt2 in zip(pts[:-1], pts[1:]):
             if LineString((pt1, pt2)).distance(pt_intersection) < 1E-6:
@@ -125,14 +127,14 @@ class Area():
         dist = np.sqrt(np.sum(np.square(pt2 - pt1)))
         dir = (pt2 - pt1) / dist
         orth = np.array([-dir[1], dir[0]])  # ccw
-        house_area = self._polygon.area * percentage
+        house_area = self.polygon.area * percentage
         width = diameter / 2 # hence we can reach from 0 to diameter
-        res = [self._polygon,]
+        res = [self.polygon,]
         dw = width
 
-        while abs(res[0].area - house_area) > 1:  # 1 meter² error accepted
+        while abs(res[0].area - house_area) > 1:  # 1 meterÂ² error accepted
             cut = LineString([pt1 + width * orth - diameter * dir, pt2 + width * orth + diameter * dir])
-            res = ops.split(self._polygon, cut)
+            res = ops.split(self.polygon, cut)
             dw /= 2
 
             if len(res) == 0:
@@ -151,7 +153,7 @@ class Area():
 
         area0 = Area(res[0], self._category)
         area1 = Area(res[1], new_category)
-        
+
         if inplace:
             self._sub_areas = [area0, area1]
         else:

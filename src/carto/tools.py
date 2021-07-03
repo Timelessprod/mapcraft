@@ -1,12 +1,13 @@
 from shapely.geometry import mapping, MultiPolygon
 import fiona
 
+SCHEMA = {
+    'geometry': 'Polygon',
+    'properties': {'category': 'int'},
+}
+
 def json(what, filename):
-    schema = {
-        'geometry': 'Polygon',
-        'properties': {'category': 'int'},
-    }
-    with fiona.open(filename, 'w', 'GeoJSON', schema) as c:
+    with fiona.open(filename, 'w', 'GeoJSON', SCHEMA) as c:
         for co in what.components():
             if type(co._polygon) == MultiPolygon:
                 for p in co._polygon:
