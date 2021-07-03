@@ -58,6 +58,7 @@ class Area():
         self._category = category
         self._sub_areas = sub_areas
         self._id = self.get_id()
+
         Area.members.append(self)
 
     def __del__(self):
@@ -95,9 +96,11 @@ class Area():
             True
         """
         assert(percentage > 0)
+
         if not self._polygon.exterior.is_ccw: # should be counter clockwise
             coords = list(self._polygon.exterior.coords)
             self._polygon = Polygon(coords[::-1])
+        
         direction = np.deg2rad(90 - direction)  # degrees are cw while radian are ccw + 0 is North
         pts = np.array(self._polygon.minimum_rotated_rectangle.exterior.coords)
         diameter = np.sqrt(np.sum(np.square(pts[2] - pts[0])))
@@ -105,14 +108,18 @@ class Area():
         end = start +  np.array([diameter * np.cos(direction), diameter * np.sin(direction)])
         path = LineString([start, end])
         pt_intersection = path.intersection(self._polygon.boundary)
+
         try:
             pt_intersection = list(pt_intersection)[-1]  # we may have more than one intersection
         except:
             pass
+
         pts = self._polygon.boundary.coords
+
         for pt1, pt2 in zip(pts[:-1], pts[1:]):
             if LineString((pt1, pt2)).distance(pt_intersection) < 1E-6:
                 break
+
         pt1 = np.array(pt1)
         pt2 = np.array(pt2)
         dist = np.sqrt(np.sum(np.square(pt2 - pt1)))
@@ -122,23 +129,29 @@ class Area():
         width = diameter / 2 # hence we can reach from 0 to diameter
         res = [self._polygon,]
         dw = width
+
         while abs(res[0].area - house_area) > 1:  # 1 meter² error accepted
             cut = LineString([pt1 + width * orth - diameter * dir, pt2 + width * orth + diameter * dir])
             res = ops.split(self._polygon, cut)
             dw /= 2
+
             if len(res) == 0:
                 width -= dw
                 continue
+
             if pt_intersection.distance(res[0]) > pt_intersection.distance(res[1]):
                 res = MultiPolygon([res[1], res[0]])
             else:
                 res = MultiPolygon([g for g in res])
+
             if res[0].area > house_area:
                 width -= dw
             else:
                 width += dw
+
         area0 = Area(res[0], self._category)
         area1 = Area(res[1], new_category)
+        
         if inplace:
             self._sub_areas = [area0, area1]
         else:

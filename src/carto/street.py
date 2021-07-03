@@ -1,6 +1,5 @@
 from carto.area import Category
 
-
 from carto.area import Area
 
 class Street(Area):

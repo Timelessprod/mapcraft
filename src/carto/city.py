@@ -26,6 +26,7 @@ class City(Area):
         regionsFull = unary_union(regions)
         regions = [region.buffer(-0.08) for region in regions]
         roads = regionsFull.difference(MultiPolygon(regions))
+
         return regions, roads
 
     def __init__(self, population, density=10000, has_walls=False, has_castel=False, has_river=False):
@@ -37,8 +38,8 @@ class City(Area):
         self.has_river = has_river
 
         regionsPoly, streetPoly = City.getRegionsPolygons()
+
         self.districts = [District(regionPoly, random.choice(list(Category))) for regionPoly in regionsPoly]
         self.streets = Street(streetPoly)
 
         super().__init__(unary_union(regionsPoly), category=Category.STREET, sub_areas=self.districts + [self.streets])
-
