@@ -8,6 +8,7 @@ import random
 from shapely.ops import unary_union
 from carto.street import Street
 import matplotlib.pyplot as plt
+from carto.voronoi import voronoi_finite_polygons_2d
 
 class District(Area):
 	@staticmethod
@@ -18,7 +19,7 @@ class District(Area):
 		:rtype: list(Polygon), Polygon
 		"""
 
-		N = 15
+		N = 10
 		radius = (N - 2)
 		lineX= np.linspace(polygon.bounds[0], polygon.bounds[2], N)
 		lineY = np.linspace(polygon.bounds[1], polygon.bounds[3], N)
@@ -27,15 +28,14 @@ class District(Area):
 		points = np.array([[x, y] for x in lineX for y in lineY if polygon.contains(Point(x, y))])
 
 
-		points += np.random.random((len(points), 2)) * 1/2
-
+		points += np.random.random((len(points), 2)) * 1/3
 		# 2. Voronoi algorithm will returns the areas closest to each points
 		vor = Voronoi(points)
 
-		regions = [r for r in vor.regions if -1 not in r and len(r) > 0]
+		regions, vertices = voronoi_finite_polygons_2d(vor,0.1)
 
 		# 4. Make Polygons for each area
-		regions = [Polygon([vor.vertices[i] for i in r]) for r in regions]
+		regions = [Polygon([vertices[i] for i in r]) for r in regions]
 
 		# 5. Create a zone thats englobing the areas and only keep the areas fully in that zone
 #		zone = Polygon((2 * np.random.random((8, 2)) - 1) *
@@ -46,9 +46,7 @@ class District(Area):
 		plt.plot(x, y)
 		for r in regions:
 			plt.plot(*r.exterior.xy)
-		plt.show()
 
-		print(regions)
 		# 6. agregate all the areas.
 #		regionsFull = unary_union(regions)
 
@@ -61,11 +59,9 @@ class District(Area):
 		return regions
 
 	def __init__(self, polygon, category):
-		regionsPoly  = District.getRegionsPolygons(polygon)
+		regionsPoly = District.getRegionsPolygons(polygon)
 		# 2. We create the districts for each regions (these disticts will be split up themselves)
-		#self.districts = [House(regionPoly) for regionPoly in regionsPoly]
-
-		self._sub_areas = []
+		self.districts = [House(regionPoly) for regionPoly in regionsPoly]
 
 		# 3. We create the streets
-		super().__init__(unary_union(regionsPoly), category=Category.COMPOSITE, sub_areas=self.districts)
+		super().__init__(polygon, category=Category.COMPOSITE, sub_areas=self.districts)

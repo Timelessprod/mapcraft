@@ -9,4 +9,4 @@ import numpy as np
 import random
 
 city = city.City(100)
-tools.json(city, "./city/city.json")
+tools.json(city, "../city/city.json")
