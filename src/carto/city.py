@@ -47,7 +47,6 @@ class City(Area):
         # 3. Keep only the areas that are not on the edge of the plot
         regions = [r for r in vor.regions if - 1 not in r and len(r) > 0]
 
-        print(regions[0])
         # 4. Make Polygons for each area
         regions = [Polygon([vor.vertices[i] for i in r]) for r in regions]
 
