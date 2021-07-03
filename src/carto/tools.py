@@ -1,14 +1,22 @@
 from shapely.geometry import mapping
 import fiona
 
+SCHEMA = {
+    'geometry': 'Polygon',
+    'properties': {'category': 'int'},
+}
+
 def json(what, filename):
-    schema = {
-        'geometry': 'Polygon',
-        'properties': {'category': 'int'},
-    }
-    with fiona.open(filename, 'w', 'GeoJSON', schema) as c:
+    with fiona.open(filename, 'w', 'GeoJSON', SCHEMA) as c:
         for co in what.components():
-            c.write({
-                'geometry': mapping(co._polygon),
-                'properties': {'category': co._category.value},
-            })
+            if type(co._polygon) == MultiPolygon:
+                for p in co._polygon:
+                    c.write({
+                        'geometry': mapping(p),
+                        'properties': {'category': co._category.value},
+                    })
+            else:
+                c.write({
+                    'geometry': mapping(co._polygon),
+                    'properties': {'category': co._category.value},
+                })
