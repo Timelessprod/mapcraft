@@ -2,11 +2,15 @@ from carto.district import District
 import carto.tools as tools
 from shapely.geometry import mapping, Polygon, Point, LineString, MultiPolygon
 from carto.area import Area, Category
-from scipy.spatial import Voronoi
+from scipy.spatial import Voronoi, voronoi_plot_2d
 import numpy as np
 import random
 from shapely.ops import unary_union
 from carto.street import Street
+import matplotlib.pyplot as plt
+from carto.house import House
+from carto.garden import Garden
+import math
 
 
 class City(Area):
@@ -32,14 +36,19 @@ class City(Area):
         :return: The regions and road polygons
         :rtype: list(Polygon), Polygon
         """
-        N = 5
-        radius = (N - 2)
+        density = 1000
+        population = 2_000_00
+        surface = (population // density) * 1000
+
+        l = math.sqrt(surface)
+        N = int(l) // 60 - 1
+        radius = N
 
         # 1. Generate points that are in a grid pattern and then randomly move them
-        points = np.array([[x, y] for x in np.linspace(-1, 1, N)
-                          for y in np.linspace(-1, 1, N)])
-        points *= radius
-        points += np.random.random((len(points), 2)) * (radius / 2)
+        points = np.array([[x, y] for x in np.linspace(-l, l, N)
+                          for y in np.linspace(-l, l, N)])
+
+        points += np.random.random((len(points), 2)) * (radius * 10)
 
         # 2. Voronoi algorithm will returns the areas closest to each points
         vor = Voronoi(points)
@@ -51,15 +60,14 @@ class City(Area):
         regions = [Polygon([vor.vertices[i] for i in r]) for r in regions]
 
         # 5. Create a zone thats englobing the areas and only keep the areas fully in that zone
-        zone = Polygon((2 * np.random.random((8, 2)) - 1) *
-                       radius).convex_hull.buffer(radius/1)
+        zone = Polygon((2 * np.random.random((8, 2)) - 1) * radius).convex_hull.buffer(radius * 65)
         regions = [r for r in regions if zone.contains(r)]
 
         # 6. agregate all the areas.
         regionsFull = unary_union(regions)
 
         # 7. Shrink the areas to make room between them
-        regions = [region.buffer(-0.08) for region in regions]
+        regions = [region.buffer(-2.5) for region in regions]
 
         # 8. take the diff between the agregated non shrink areas and the shrinked areas, these will be the roads.
         roads = regionsFull.difference(MultiPolygon(regions))
@@ -81,10 +89,20 @@ class City(Area):
         regionsPoly, streetPoly = City.getRegionsPolygons()
 
         # 2. We create the districts for each regions (these disticts will be split up themselves)
-        self.districts = [District(regionPoly, Category.HOUSE) for regionPoly in regionsPoly]
+        self.districts = []
+        self.streets = [Street(streetPoly)]
 
+        #houses, streets = District.generate(regionsPoly[0])
+        #self.districts = houses
+        #self.streets = self.streets + streets
+
+        for r in regionsPoly:
+            houses, streets = District.generate(r)
+            self.districts = self.districts + houses
+            self.streets = self.streets + streets
+
+        #h, g = self.districts[0].split(0.4, 180, False)
         # 3. We create the streets
-        self.streets = Street(streetPoly)
 
         super().__init__(unary_union(regionsPoly), category=Category.COMPOSITE,
-                         sub_areas=self.districts + [self.streets])
+                         sub_areas=self.districts + self.streets)

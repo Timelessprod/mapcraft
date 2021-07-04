@@ -4,8 +4,7 @@ from shapely import ops
 import shapely
 import numpy as np
 
-import carto.tools as tools
-
+from carto.tools import *
 
 class Category(IntEnum):
     UNDEFINED = 0
@@ -76,6 +75,10 @@ class Area():
     @property
     def polygon(self):
         return self._polygon
+
+    @polygon.setter
+    def polygon(self, val):
+        self._polygon  = val
 
     def split(self, percentage, direction, inplace=True, new_category=Category.GARDEN):
         """
