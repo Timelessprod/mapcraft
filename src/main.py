@@ -8,5 +8,5 @@ from scipy.spatial import Voronoi
 import numpy as np
 import random
 
-city = city.City(100)
-tools.json(city, "../city/city.json")
+city = city.City(100, has_walls=False)
+tools.json(city, "./city/city.json")

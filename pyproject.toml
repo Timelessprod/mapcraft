@@ -4,6 +4,10 @@ version = "0.1.0"
 description = "Generateur de villages medievaux aleatoire"
 readme = 'README.md'
 authors = ["adrien MERAT <adrien.merat@epita.fr>", "nathan HABIB <nathan.habib@epita.fr>" ]
+packages = [ { include = "src", format = "sdist" },
+             { include = "tests", format = "sdist" },
+             { include = "docs" }
+           ]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -19,6 +23,9 @@ pytest = "5.2"
 autopep8 = "1.5.7"
 pylint = "^2.9.3"
 ipykernel = "^6.0.1"
+Sphinx = "^4.0.2"
+sphinx-autoapi = "^1.8.1"
+neovim = "^0.3.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

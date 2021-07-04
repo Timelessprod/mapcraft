@@ -167,9 +167,3 @@ class Area():
             return self._sub_areas
         else:
             return [self,]
-
-
-if __name__ == "__main__":
-    zone = Area(Polygon([(0,0), (10,0), (15,15), (-5,10)]), Category.HOUSE) # units are meters
-    zone.split(0.4, 280, inplace=True)  # house in south, it takes 40 % of the area
-    tools.json(zone, '/tmp/house.json')
