@@ -1,3 +1,5 @@
-# Carto
+# Mapcraf
 
-Procedural city map generator.
+Procedural city map generator using Veronoï pattern
+
+Contributors : Adrien MERAT & Nathan HABIB
